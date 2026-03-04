@@ -1,13 +1,869 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Reusable Studio Engine</title>
-		<link rel="stylesheet" href="./style.css" />
-	</head>
-	<body>
-		<canvas id="app-canvas" aria-label="Canvas sketch"></canvas>
-		<script type="module" src="./main.js"></script>
-	</body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Moment</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400&display=swap');
+
+:root {
+  --bg:            #e8e0d5;
+  --ink:           #7a4e00;
+  --ink-mid:       #a06c10;
+  --ink-faint:     #c49030;
+  --accent:        #a07820;
+  --shadow-rabbit: rgba(24,20,16,0.13);
+  --glow-color:    rgba(160,120,80,0.16);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html {
+  height: 100%;
+}
+
+body {
+  width:100%; height:100%;
+  background: var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Jost', sans-serif;
+  font-weight:200;
+  color: var(--ink);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  transition: background 1.2s ease;
+}
+
+body::after {
+  content:'';
+  position:fixed; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:2;
+}
+
+.scene {
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center;
+  width:100%; height:100%;
+  position:relative; z-index:1;
+  text-align:center;
+}
+
+.scene-inner {
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center;
+  width:100%;
+  max-width:600px;
+  padding:0 20px;
+}
+
+/* ── Wordmark ── */
+.wordmark {
+  font-family:'Jost', sans-serif;
+  font-weight:400; font-size:clamp(15px, 2.0vh, 19px);
+  letter-spacing:0.44em; text-transform:uppercase;
+  color:#a07820;
+  margin-bottom:clamp(14px, 2.8vh, 32px);
+  transition:opacity 1.2s ease;
+  position:relative; z-index:3;
+}
+
+/* ── Rabbit ── */
+.rabbit-wrap {
+  position:relative;
+  width:clamp(200px, 38vh, 360px);
+  height:clamp(220px, 42vh, 400px);
+  display:flex; align-items:flex-end; justify-content:center;
+  margin-bottom:clamp(4px, 1vh, 12px);
+}
+
+.rabbit-glow {
+  position:absolute; bottom:16px; left:50%;
+  transform:translateX(-50%);
+  width:100%; height:100%;
+  border-radius:50%;
+  background:radial-gradient(circle, var(--glow-color) 0%, transparent 68%);
+  opacity:0;
+  transition:opacity 1.6s ease;
+  pointer-events:none;
+}
+
+.rabbit-svg {
+  width:clamp(160px, 30vh, 320px); height:auto; display:block;
+  transform-origin:75px 196px;
+  transition:transform 1.1s cubic-bezier(0.45,0.05,0.55,0.95), filter 1.2s ease;
+  filter:drop-shadow(0 8px 22px var(--shadow-rabbit));
+  overflow:visible;
+}
+
+.rabbit-ground {
+  position:absolute; bottom:0; left:50%;
+  transform:translateX(-50%);
+  width:55%; height:10px;
+  background:radial-gradient(ellipse, rgba(24,20,16,0.11) 0%, transparent 70%);
+  border-radius:50%;
+  transition:transform 0.9s ease, opacity 0.9s ease;
+}
+
+/* ── Emotion word ── */
+.emotion-display {
+  height:0;
+  overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  transition:height 0.4s ease, margin 0.4s ease;
+  margin-bottom:0;
+}
+
+.s-emotion-visible .emotion-display,
+.s-emotion-fading .emotion-display {
+  height:clamp(32px, 5vh, 54px);
+  margin-bottom:clamp(4px, 0.8vh, 10px);
+}
+
+.emotion-word {
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic; font-weight:400;
+  font-size:clamp(30px, 5.8vh, 58px);
+  letter-spacing:0.04em;
+  color:var(--ink);
+  opacity:0;
+  transition:opacity 1.4s ease;
+}
+
+/* ── Quote ── */
+.quote-display {
+  height:0;
+  overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  max-width:min(420px, 80vw);
+  text-align:center;
+  padding:0 24px;
+  transition:height 0.4s ease, margin 0.4s ease;
+  margin-bottom:0;
+}
+
+.s-show-quote .quote-display {
+  height:clamp(32px, 5vh, 56px);
+  margin-bottom:clamp(8px, 1.5vh, 20px);
+}
+
+.quote-text {
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic; font-weight:400;
+  font-size:clamp(17px, 2.5vh, 24px);
+  letter-spacing:0.02em; line-height:1.6;
+  color:var(--ink-mid);
+  opacity:0;
+  transition:opacity 1.8s ease;
+}
+
+/* ── Input ── */
+.input-area {
+  display:flex; flex-direction:column; align-items:center;
+  gap:clamp(10px, 1.6vh, 18px);
+  opacity:1; pointer-events:all;
+  max-height:300px;
+  overflow:hidden;
+  transition:opacity 0.9s ease, max-height 0.9s ease;
+}
+
+.input-prompt {
+  font-size:clamp(13px, 1.8vh, 17px); letter-spacing:0.26em;
+  text-transform:uppercase; color:var(--ink-faint);
+}
+
+.emotion-input {
+  background:transparent; border:none;
+  border-bottom:1px solid var(--accent);
+  outline:none;
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic; font-weight:300;
+  font-size:clamp(32px, 4.8vh, 50px);
+  color:var(--ink); text-align:center;
+  width:clamp(260px, 50vw, 400px); padding:4px 0 8px;
+  caret-color:var(--accent);
+}
+.emotion-input::placeholder { color:#bdb5ac; font-style:italic; }
+
+.submit-btn {
+  background:none; border:none;
+  border-bottom:1px solid transparent;
+  cursor:pointer;
+  font-family:'Jost', sans-serif;
+  font-weight:300; font-size:clamp(12px, 1.6vh, 15px);
+  letter-spacing:0.36em; text-transform:uppercase;
+  color:var(--ink-faint); padding:6px 20px;
+  transition:color 0.3s, border-color 0.3s;
+}
+.submit-btn:hover { color:var(--ink); border-bottom-color:var(--accent); }
+
+/* ── Breath guide — in normal flow, not absolute ── */
+.breath-guide {
+  display:flex; flex-direction:column; align-items:center;
+  gap:clamp(8px, 1.2vh, 14px);
+  opacity:0;
+  height:0; overflow:hidden;
+  transition:opacity 1.2s ease, height 0.5s ease, margin 0.5s ease;
+  pointer-events:none; white-space:nowrap;
+  margin-top:0;
+}
+
+.s-show-breath .breath-guide {
+  opacity:1;
+  height:clamp(92px, 16vh, 150px);
+  margin-top:clamp(8px, 1.5vh, 16px);
+}
+
+.breath-ring {
+  width:clamp(70px, 13vh, 115px);
+  height:clamp(70px, 13vh, 115px);
+  border-radius:50%;
+  border:2.5px solid var(--accent);
+  background: radial-gradient(circle, rgba(160,120,80,0.08) 0%, transparent 70%);
+  opacity:0.4; transform:scale(0.35);
+  transition:transform 6.0s cubic-bezier(0.45,0.05,0.55,0.95),
+             opacity   6.0s cubic-bezier(0.45,0.05,0.55,0.95),
+             background 4.0s ease;
+}
+.breath-ring.inhale {
+  transform:scale(1); opacity:1;
+  background: radial-gradient(circle, rgba(160,120,80,0.18) 0%, transparent 70%);
+}
+.breath-ring.exhale {
+  transform:scale(0.35); opacity:0.35;
+  background: radial-gradient(circle, rgba(160,120,80,0.04) 0%, transparent 70%);
+}
+
+.breath-label {
+  font-size:clamp(11px, 1.3vh, 14px); letter-spacing:0.32em;
+  text-transform:uppercase; color:var(--ink-faint);
+  transition: opacity 0.6s ease;
+}
+
+/* ── Choices ── */
+.choice-area {
+  display:flex; gap:clamp(28px, 5vw, 56px);
+  opacity:0; pointer-events:none;
+  transition:opacity 1.4s ease;
+  white-space:nowrap;
+  margin-top:clamp(8px, 1.5vh, 16px);
+}
+
+.choice-btn {
+  background:none; border:1px solid var(--accent);
+  cursor:pointer;
+  font-family:'Jost', sans-serif;
+  font-weight:300; font-size:clamp(13px, 1.7vh, 16px);
+  letter-spacing:0.36em; text-transform:uppercase;
+  color:var(--ink-mid); padding:clamp(12px,1.6vh,16px) clamp(28px,4vw,46px);
+  transition:color 0.4s, border-color 0.4s, background 0.4s;
+}
+.choice-btn:hover {
+  color:var(--ink);
+  border-color:var(--ink);
+  background:rgba(160,120,32,0.06);
+}
+
+/* ═══════════════════════════
+   STATE SYSTEM
+═══════════════════════════ */
+.s-hide-input .input-area {
+  opacity:0;
+  pointer-events:none;
+  max-height:0;
+  overflow:hidden;
+  margin:0;
+  padding:0;
+  gap:0;
+}
+.s-hide-input .wordmark   { opacity:1; }
+
+/* Emotion word — visible then fades slowly */
+.s-emotion-visible .emotion-word { opacity:1; }
+.s-emotion-fading  .emotion-word {
+  opacity:0;
+  transition:opacity 3.5s ease !important;
+}
+
+.s-show-quote .quote-text { opacity:1; }
+
+/* Tense */
+.s-tense .rabbit-svg {
+  transform:scaleY(0.86) translateY(9px);
+  filter:drop-shadow(0 3px 8px var(--shadow-rabbit));
+}
+.s-tense .rabbit-ground { transform:translateX(-50%) scaleX(0.80); opacity:0.65; }
+.s-tense .rabbit-glow   { opacity:0 !important; }
+
+/* Breathing */
+.s-breathing .rabbit-svg    { animation:rabbit-breathe 6.0s ease-in-out infinite; }
+.s-breathing .rabbit-glow   { opacity:1; animation:glow-breathe 6.0s ease-in-out infinite; }
+.s-breathing .rabbit-ground { animation:ground-breathe 6.0s ease-in-out infinite; }
+
+/* Still */
+.s-still .rabbit-svg    { transform:none; animation:none; filter:drop-shadow(0 8px 22px var(--shadow-rabbit)); }
+.s-still .rabbit-glow   { opacity:0.5; animation:none; }
+.s-still .rabbit-ground { animation:none; }
+
+.s-show-choices .choice-area { opacity:1; pointer-events:all; }
+
+/* ── Facial expression elements — hidden by default ── */
+/* Tears */
+#tear-L, #tear-R        { opacity:0; transition:opacity 0.8s ease; }
+/* Brow furrow (angry) */
+#brow-L, #brow-R        { opacity:0; transition:opacity 0.7s ease; }
+/* Anxious sweat drop */
+#sweat                  { opacity:0; transition:opacity 0.7s ease; }
+/* Overwhelmed heavy-lid overlays */
+#lid-L, #lid-R          { opacity:0; transition:opacity 0.7s ease; }
+/* Calm soft-mouth smile */
+#mouth-calm             { opacity:0; transition:opacity 0.8s ease; }
+/* Neutral mouth */
+#mouth-neutral          { opacity:0.5; transition:opacity 0.6s ease; }
+
+/* Tear drop animation */
+@keyframes tear-fall {
+  0%   { transform:translateY(0);   opacity:0.7; }
+  80%  { transform:translateY(10px); opacity:0.5; }
+  100% { transform:translateY(13px); opacity:0; }
+}
+
+.tear-drop {
+  animation:tear-fall 2.8s ease-in infinite;
+}
+#tear-R .tear-drop { animation-delay:1.4s; }
+
+/* Anxious chattering teeth */
+#teeth { opacity:0; transition:opacity 0.6s ease; }
+
+@keyframes chatter {
+  0%,100% { transform:translateY(0);   }
+  20%     { transform:translateY(-2px); }
+  40%     { transform:translateY(1px);  }
+  60%     { transform:translateY(-2.5px); }
+  80%     { transform:translateY(0.5px); }
+}
+
+#teeth-lower.chattering {
+  animation: chatter 0.22s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* ── Keyframes ── */
+@keyframes rabbit-breathe {
+  0%   { transform:scaleY(1.000) translateY(0px);  }
+  18%  { transform:scaleY(1.000) translateY(0px);  }
+  44%  { transform:scaleY(1.040) translateY(-5px); }
+  56%  { transform:scaleY(1.040) translateY(-5px); }
+  82%  { transform:scaleY(0.993) translateY(2px);  }
+  100% { transform:scaleY(1.000) translateY(0px);  }
+}
+
+@keyframes glow-breathe {
+  0%,18%  { opacity:0.5; transform:translateX(-50%) scale(1);    }
+  44%,56% { opacity:1;   transform:translateX(-50%) scale(1.14); }
+  82%     { opacity:0.6; transform:translateX(-50%) scale(0.96); }
+  100%    { opacity:0.5; transform:translateX(-50%) scale(1);    }
+}
+
+@keyframes ground-breathe {
+  0%,18%  { transform:translateX(-50%) scaleX(1);    opacity:1;    }
+  44%,56% { transform:translateX(-50%) scaleX(0.88); opacity:0.65; }
+  82%     { transform:translateX(-50%) scaleX(1.04); opacity:1;    }
+  100%    { transform:translateX(-50%) scaleX(1);    opacity:1;    }
+}
+</style>
+</head>
+<body>
+
+<div class="scene" id="scene">
+  <div class="scene-inner">
+
+    <div class="wordmark">One Moment</div>
+
+    <div class="rabbit-wrap">
+      <div class="rabbit-glow" id="rabbitGlow"></div>
+
+      <svg class="rabbit-svg" id="rabbitSvg"
+           viewBox="0 0 150 210"
+           xmlns="http://www.w3.org/2000/svg"
+           overflow="visible">
+
+        <!-- ── Ears ── -->
+        <g id="ear-L" transform-origin="44 98">
+          <ellipse cx="38" cy="54" rx="11" ry="45" fill="#c8c1b6"/>
+          <ellipse cx="38" cy="54" rx="6"  ry="35" fill="#bfa8a4" opacity="0.42"/>
+        </g>
+        <g id="ear-R" transform-origin="106 98">
+          <ellipse cx="112" cy="54" rx="11" ry="45" fill="#c8c1b6"/>
+          <ellipse cx="112" cy="54" rx="6"  ry="35" fill="#bfa8a4" opacity="0.42"/>
+        </g>
+
+        <!-- ── Body ── -->
+        <ellipse cx="75" cy="158" rx="40" ry="50" fill="#cec8be"/>
+        <ellipse cx="75" cy="160" rx="24" ry="34" fill="#dedad4" opacity="0.34"/>
+        <ellipse cx="75" cy="173" rx="36" ry="19" fill="#b8b2a8" opacity="0.18"/>
+
+        <!-- ── Head ── -->
+        <ellipse cx="75" cy="100" rx="30" ry="28" fill="#d8d2ca"/>
+        <ellipse cx="75" cy="114" rx="16" ry="12" fill="#d4cec6" opacity="0.62"/>
+        <!-- Cheeks -->
+        <ellipse cx="58" cy="108" rx="10" ry="7"  fill="#ddd7cf" opacity="0.28"/>
+        <ellipse cx="92" cy="108" rx="10" ry="7"  fill="#ddd7cf" opacity="0.28"/>
+
+        <!-- ── Angry brow lines — hidden by default ── -->
+        <!-- Left brow: angled inward -->
+        <line id="brow-L"
+              x1="52" y1="88" x2="63" y2="91"
+              stroke="#7a6a62" stroke-width="1.6"
+              stroke-linecap="round" opacity="0"/>
+        <!-- Right brow: angled inward (mirror) -->
+        <line id="brow-R"
+              x1="98" y1="88" x2="87" y2="91"
+              stroke="#7a6a62" stroke-width="1.6"
+              stroke-linecap="round" opacity="0"/>
+
+        <!-- ── Left eye ── -->
+        <ellipse id="eye-iris-L"  cx="62" cy="97" rx="4.8" ry="5.2" fill="#241e1a"/>
+        <ellipse id="eye-sheen-L" cx="62" cy="95" rx="5.0" ry="2.2" fill="#f0ece6" opacity="0.08"/>
+        <ellipse id="eye-catch-L" cx="63.6" cy="95" rx="1.4" ry="1.4" fill="white" opacity="0.72"/>
+        <!-- Heavy lid overlay (overwhelmed) — covers top portion of eye -->
+        <ellipse id="lid-L"
+                 cx="62" cy="94" rx="5.2" ry="3.4"
+                 fill="#d8d2ca" opacity="0"/>
+
+        <!-- ── Right eye ── -->
+        <ellipse id="eye-iris-R"  cx="88" cy="97" rx="4.8" ry="5.2" fill="#241e1a"/>
+        <ellipse id="eye-sheen-R" cx="88" cy="95" rx="5.0" ry="2.2" fill="#f0ece6" opacity="0.08"/>
+        <ellipse id="eye-catch-R" cx="89.6" cy="95" rx="1.4" ry="1.4" fill="white" opacity="0.72"/>
+        <!-- Heavy lid overlay (overwhelmed) -->
+        <ellipse id="lid-R"
+                 cx="88" cy="94" rx="5.2" ry="3.4"
+                 fill="#d8d2ca" opacity="0"/>
+
+        <!-- ── Nose ── -->
+        <ellipse cx="75" cy="110" rx="3.2" ry="2.0" fill="#b09090" opacity="0.55"/>
+
+        <!-- ── Mouth variants ──
+             neutral: flat, subtle
+             calm: slight soft upward curve -->\n        <path id="mouth-neutral"
+              d="M 69 115 Q 75 117 81 115"
+              stroke="#9a8a82" stroke-width="1.0"
+              fill="none" stroke-linecap="round" opacity="0.45"/>
+        <path id="mouth-calm"
+              d="M 68 114 Q 75 119 82 114"
+              stroke="#9a8a82" stroke-width="1.1"
+              fill="none" stroke-linecap="round" opacity="0"/>
+
+        <!-- ── Anxious: chattering teeth ── -->
+        <g id="teeth" opacity="0">
+          <!-- Mouth cavity -->
+          <path d="M 66 113 Q 75 120 84 113 Q 84 122 75 123 Q 66 122 66 113 Z"
+                fill="#b09090" opacity="0.35"/>
+          <!-- Upper teeth row -->
+          <g id="teeth-upper">
+            <rect x="68"  y="113" width="4.5" height="4" rx="0.8" fill="white" opacity="0.92"/>
+            <rect x="73"  y="113" width="4.5" height="4" rx="0.8" fill="white" opacity="0.92"/>
+            <rect x="78"  y="113" width="4.5" height="4" rx="0.8" fill="white" opacity="0.92"/>
+          </g>
+          <!-- Lower teeth row — chatters up and down -->
+          <g id="teeth-lower">
+            <rect x="68.5" y="119" width="4" height="3.5" rx="0.8" fill="white" opacity="0.85"/>
+            <rect x="73.5" y="119" width="4" height="3.5" rx="0.8" fill="white" opacity="0.85"/>
+            <rect x="78.5" y="119" width="4" height="3.5" rx="0.8" fill="white" opacity="0.85"/>
+          </g>
+        </g>
+
+        <!-- ── Anxious sweat drop (top right of head) ── -->
+        <g id="sweat" opacity="0">
+          <ellipse cx="101" cy="80" rx="3" ry="4.5" fill="#a8c8d8" opacity="0.55"/>
+          <ellipse cx="101" cy="77" rx="2" ry="2"   fill="#a8c8d8" opacity="0.45"/>
+        </g>
+
+        <!-- ── Sad tears ── -->
+        <!-- Left tear -->
+        <g id="tear-L" opacity="0">
+          <ellipse class="tear-drop" cx="57" cy="103" rx="1.8" ry="2.8" fill="#9ab8cc" opacity="0.65"/>
+        </g>
+        <!-- Right tear -->
+        <g id="tear-R" opacity="0">
+          <ellipse class="tear-drop" cx="93" cy="103" rx="1.8" ry="2.8" fill="#9ab8cc" opacity="0.65"/>
+        </g>
+
+        <!-- ── Paws ── -->
+        <ellipse cx="57" cy="192" rx="12" ry="7.5" fill="#c6c0b6"/>
+        <ellipse cx="93" cy="192" rx="12" ry="7.5" fill="#c6c0b6"/>
+
+        <!-- ── Tail ── -->
+        <ellipse cx="114" cy="168" rx="9.5" ry="9.5" fill="#e0dbd4"/>
+
+      </svg>
+
+      <div class="rabbit-ground"></div>
+    </div>
+
+    <!-- Emotion word -->
+    <div class="emotion-display">
+      <span class="emotion-word" id="emotionWord"></span>
+    </div>
+
+    <!-- Quote -->
+    <div class="quote-display">
+      <span class="quote-text" id="quoteText"></span>
+    </div>
+
+    <!-- Breath guide — in flow, not inside rabbit-wrap -->
+    <div class="breath-guide" id="breathGuide">
+      <div class="breath-ring" id="breathRing"></div>
+      <div class="breath-label" id="breathLabel">breathe</div>
+    </div>
+
+    <!-- Input -->
+    <div class="input-area" id="inputArea">
+      <div class="input-prompt">what are you feeling right now?</div>
+      <input class="emotion-input" id="emotionInput"
+             type="text" placeholder="name it"
+             maxlength="48" autocomplete="off"
+             autocorrect="off" spellcheck="false"/>
+      <button class="submit-btn" id="submitBtn">enter</button>
+    </div>
+
+    <!-- Choices -->
+    <div class="choice-area">
+      <button class="choice-btn" id="stayBtn">stay</button>
+      <button class="choice-btn" id="leaveBtn">leave</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ── Elements ── */
+const scene        = document.getElementById('scene');
+const emotionWord  = document.getElementById('emotionWord');
+const quoteText    = document.getElementById('quoteText');
+const emotionInput = document.getElementById('emotionInput');
+const submitBtn    = document.getElementById('submitBtn');
+const breathRing   = document.getElementById('breathRing');
+const breathLabel  = document.getElementById('breathLabel');
+const stayBtn      = document.getElementById('stayBtn');
+const leaveBtn     = document.getElementById('leaveBtn');
+const inputArea    = document.getElementById('inputArea');
+
+/* SVG posture elements */
+const earL      = document.getElementById('ear-L');
+const earR      = document.getElementById('ear-R');
+const eyeIrisL  = document.getElementById('eye-iris-L');
+const eyeIrisR  = document.getElementById('eye-iris-R');
+const eyeCatchL = document.getElementById('eye-catch-L');
+const eyeCatchR = document.getElementById('eye-catch-R');
+
+/* SVG expression elements */
+const tearL       = document.getElementById('tear-L');
+const tearR       = document.getElementById('tear-R');
+const browL       = document.getElementById('brow-L');
+const browR       = document.getElementById('brow-R');
+const sweat       = document.getElementById('sweat');
+const teeth       = document.getElementById('teeth');
+const teethLower  = document.getElementById('teeth-lower');
+const lidL        = document.getElementById('lid-L');
+const lidR        = document.getElementById('lid-R');
+const mouthCalm   = document.getElementById('mouth-calm');
+const mouthNeutral= document.getElementById('mouth-neutral');
+
+/* ── All expression elements for reset ── */
+const ALL_EXPRESSIONS = [tearL, tearR, browL, browR, sweat, teeth, lidL, lidR, mouthCalm];
+
+/* ── State ── */
+const ALL_STATES = [
+  's-hide-input','s-emotion-visible','s-emotion-fading','s-show-quote',
+  's-tense','s-breathing','s-still','s-show-breath','s-show-choices',
+];
+
+function clearAllStates() { ALL_STATES.forEach(s => scene.classList.remove(s)); }
+function addState(s)      { scene.classList.add(s); }
+function removeState(s)   { scene.classList.remove(s); }
+
+/* ── Background per theme ── */
+const THEME_BG = {
+  anxious:    '#cdd4e0',  /* steel blue — unsettled, cool, tight */
+  overwhelmed:'#d4cedf',  /* dusty violet — heavy, compressed */
+  sad:        '#c8d6dd',  /* slate — muted, withdrawn */
+  angry:      '#ddc9bc',  /* warm clay — heat, friction */
+  calm:       '#ccdacc',  /* sage — open, settled */
+  neutral:    '#e8e0d5',  /* warm sand — default */
+};
+
+function setBackground(theme) {
+  document.body.style.background = THEME_BG[theme] || THEME_BG.neutral;
+}
+function resetBackground() {
+  document.body.style.background = THEME_BG.neutral;
+}
+
+/* ── Emotion classification ── */
+const EMOTION_MAP = {
+  anxious:    ['anxious','anxiety','nervous','worried','worry','scared','fear','fearful','panic','panicked','uneasy','dread','apprehensive','tense','stressed','stress'],
+  overwhelmed:['overwhelmed','overwhelm','too much','swamped','buried','stuck','frozen','paralyzed','overloaded','flooded','scattered','chaotic','confused','lost'],
+  sad:        ['sad','sadness','grief','grieving','loss','lonely','loneliness','hopeless','hopelessness','depressed','down','blue','empty','numb','hollow','heartbroken','crying','tired','exhausted','low','tearful','upset'],
+  angry:      ['angry','anger','frustrated','frustration','rage','irritated','irritation','mad','furious','annoyed','resentful','bitter','agitated'],
+  calm:       ['calm','peace','peaceful','okay','fine','content','settled','quiet','still','alright','serene','easy','relaxed','good','well'],
+};
+
+function classify(raw) {
+  const s = raw.toLowerCase().trim();
+  for (const [theme, words] of Object.entries(EMOTION_MAP)) {
+    if (words.some(w => s.includes(w))) return theme;
+  }
+  return 'overwhelmed';
+}
+
+/* ── Quotes ── */
+const QUOTES = {
+  anxious:    [
+    'The present moment is the only place you are ever safe.',
+    'You don\'t have to solve everything right now.',
+    'Anxiety is a visitor. It does not live here.',
+  ],
+  overwhelmed:[
+    'One breath. Then the next. That is enough.',
+    'You are allowed to do less than everything.',
+    'Rest is not retreat. It is return.',
+  ],
+  sad:        [
+    'Grief is love with nowhere to go. It matters.',
+    'You are allowed to feel this fully.',
+    'Sorrow is not weakness. It is depth.',
+  ],
+  angry:      [
+    'Beneath anger is almost always something that hurts.',
+    'You are allowed to feel this without acting on it.',
+    'The fire in you can warm rather than burn.',
+  ],
+  calm:       [
+    'Stay here a little longer.',
+    'This stillness belongs to you.',
+    'There is nothing to do but be present.',
+  ],
+};
+
+function getQuote(theme) {
+  const pool = QUOTES[theme] || QUOTES.overwhelmed;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/* ── Posture per theme ── */
+const POSTURE = {
+  anxious:    { earRotL:-15, earRotR: 15, eyeRy:5.6, eyeOffY: 0    },
+  overwhelmed:{ earRotL: -6, earRotR:  6, eyeRy:3.6, eyeOffY: 0.7  },
+  sad:        { earRotL:  5, earRotR: -5, eyeRy:3.0, eyeOffY: 1.0  },
+  angry:      { earRotL:-20, earRotR: 20, eyeRy:3.4, eyeOffY: 0.4  },
+  calm:       { earRotL:  6, earRotR: -6, eyeRy:5.2, eyeOffY: 0    },
+};
+const NEUTRAL = { earRotL:0, earRotR:0, eyeRy:5.2, eyeOffY:0 };
+
+const EYE_BASE_CY   = 97;
+const CATCH_BASE_CY = 95;
+
+function applyPosture(p) {
+  earL.setAttribute('transform', `rotate(${p.earRotL})`);
+  earR.setAttribute('transform', `rotate(${p.earRotR})`);
+  const cy = EYE_BASE_CY + p.eyeOffY;
+  eyeIrisL.setAttribute('ry', p.eyeRy); eyeIrisL.setAttribute('cy', cy);
+  eyeIrisR.setAttribute('ry', p.eyeRy); eyeIrisR.setAttribute('cy', cy);
+  eyeCatchL.setAttribute('cy', CATCH_BASE_CY + p.eyeOffY * 0.4);
+  eyeCatchR.setAttribute('cy', CATCH_BASE_CY + p.eyeOffY * 0.4);
+}
+
+function resetPosture() { applyPosture(NEUTRAL); }
+
+/* ── Facial expressions ── */
+/*
+  Each theme reveals specific SVG elements:
+  sad        → tears (animated drip), eyes cast slightly down
+  angry      → brow furrow lines, narrow eyes
+  anxious    → sweat drop, wide eyes, ears pulled back hard
+  overwhelmed→ heavy lid overlays over eyes
+  calm       → soft curved mouth, relaxed ears
+  On breathing/still: expressions fade out gracefully
+*/
+
+function showExpression(theme) {
+  clearExpression();
+  switch(theme) {
+    case 'sad':
+      tearL.style.opacity = '1';
+      tearR.style.opacity = '1';
+      break;
+    case 'angry':
+      browL.style.opacity = '1';
+      browR.style.opacity = '1';
+      break;
+    case 'anxious':
+      sweat.style.opacity = '1';
+      teeth.style.opacity = '1';
+      mouthNeutral.style.opacity = '0';
+      teethLower.classList.add('chattering');
+      break;
+    case 'overwhelmed':
+      lidL.style.opacity = '0.72';
+      lidR.style.opacity = '0.72';
+      break;
+    case 'calm':
+      mouthCalm.style.opacity    = '0.55';
+      mouthNeutral.style.opacity = '0';
+      break;
+  }
+}
+
+function fadeExpression() {
+  ALL_EXPRESSIONS.forEach(el => {
+    el.style.transition = 'opacity 2.0s ease';
+    el.style.opacity    = '0';
+  });
+  teethLower.classList.remove('chattering');
+  mouthCalm.style.transition   = 'opacity 2.0s ease';
+  mouthNeutral.style.transition= 'opacity 2.0s ease';
+  mouthCalm.style.opacity      = '0';
+  mouthNeutral.style.opacity   = '0.45';
+}
+
+function clearExpression() {
+  ALL_EXPRESSIONS.forEach(el => {
+    el.style.transition = 'opacity 0.7s ease';
+    el.style.opacity    = '0';
+  });
+  teethLower.classList.remove('chattering');
+  mouthCalm.style.opacity    = '0';
+  mouthNeutral.style.opacity = '0.45';
+}
+
+/* ── Breath ring ── */
+function setBreathPhase(phase) {
+  breathRing.classList.remove('inhale', 'exhale');
+  void breathRing.offsetWidth;
+  breathRing.classList.add(phase);
+  breathLabel.textContent = phase === 'inhale' ? 'breathe in' : 'breathe out';
+}
+
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+/* ── Ritual ── */
+let running = false;
+
+async function runRitual(raw) {
+  if (running) return;
+  running = true;
+
+  const theme   = classify(raw);
+  const posture = POSTURE[theme] || POSTURE.overwhelmed;
+  const quote   = getQuote(theme);
+
+  setBackground(theme);
+
+  /* 1. Show emotion word */
+  emotionWord.textContent = raw.toLowerCase().trim();
+  quoteText.textContent   = quote;
+  clearAllStates();
+  /* Clear any inline styles from reset so CSS class can control visibility */
+  inputArea.style.opacity       = '';
+  inputArea.style.pointerEvents = '';
+  inputArea.style.maxHeight     = '';
+  addState('s-hide-input');
+  addState('s-emotion-visible');
+
+  /* 2. Tense + facial expression */
+  await wait(500);
+  applyPosture(posture);
+  showExpression(theme);
+  addState('s-tense');
+
+  /* 3. Hold tension — emotion word begins slow fade (3.5s) */
+  await wait(1800);
+  removeState('s-emotion-visible');
+  addState('s-emotion-fading');   /* word fades over 3.5s */
+
+  /* 4. Show quote as word dissolves */
+  await wait(700);
+  addState('s-show-quote');
+
+  /* 5. Transition to breathing — expression fades as regulation begins */
+  await wait(1400);
+  removeState('s-tense');
+  removeState('s-emotion-fading');
+  fadeExpression();              /* expressions dissolve during breathing */
+  addState('s-breathing');
+  addState('s-show-breath');
+
+  /* Breath cycle 1 */
+  setBreathPhase('inhale'); await wait(6000);
+  setBreathPhase('exhale'); await wait(6000);
+  /* Breath cycle 2 */
+  setBreathPhase('inhale'); await wait(6000);
+  setBreathPhase('exhale'); await wait(6000);
+
+  /* 6. Still */
+  removeState('s-breathing','s-show-breath');
+  resetPosture();
+  clearExpression();
+  addState('s-still');
+  breathLabel.textContent = '';
+  breathRing.classList.remove('inhale','exhale');
+
+  /* 7. Hold stillness — unhurried */
+  await wait(4000);
+
+  /* 8. Choices */
+  addState('s-show-choices');
+
+  running = false;
+}
+
+/* ── Reset ── */
+function reset() {
+  running = false;
+  clearAllStates();
+  resetPosture();
+  clearExpression();
+  resetBackground();
+  emotionWord.textContent = '';
+  quoteText.textContent   = '';
+  emotionInput.value      = '';
+  breathLabel.textContent = 'breathe';
+  breathRing.classList.remove('inhale','exhale');
+  inputArea.style.opacity       = '1';
+  inputArea.style.pointerEvents = 'all';
+  inputArea.style.maxHeight     = '200px';
+  setTimeout(() => emotionInput.focus(), 100);
+}
+
+/* ── Events ── */
+function handleSubmit() {
+  const val = emotionInput.value.trim();
+  if (!val || running) return;
+  runRitual(val);
+}
+
+submitBtn.addEventListener('click', handleSubmit);
+emotionInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSubmit(); });
+stayBtn.addEventListener('click', reset);
+leaveBtn.addEventListener('click', reset);
+
+/* ── Init on every load ── */
+(function init() {
+  clearAllStates();
+  resetPosture();
+  clearExpression();
+  resetBackground();
+  inputArea.style.pointerEvents = 'all';
+  inputArea.style.maxHeight     = '200px';
+  inputArea.style.pointerEvents = 'all';
+  emotionInput.value = '';
+  emotionInput.focus();
+})();
+</script>
+</body>
 </html>
