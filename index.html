@@ -8,7 +8,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400&display=swap');
 
 :root {
-  --bg:            #e8e0d5;
+  --bg:            #ede0cc;
   --ink:           #7a4e00;
   --ink-mid:       #a06c10;
   --ink-faint:     #c49030;
@@ -61,8 +61,8 @@ body::after {
 /* ── Wordmark ── */
 .wordmark {
   font-family:'Jost', sans-serif;
-  font-weight:400; font-size:clamp(15px, 2.0vh, 19px);
-  letter-spacing:0.44em; text-transform:uppercase;
+  font-weight:600; font-size:clamp(13px, 1.6vh, 16px);
+  letter-spacing:0.52em; text-transform:uppercase;
   color:#a07820;
   margin-bottom:clamp(14px, 2.8vh, 32px);
   transition:opacity 1.2s ease;
@@ -123,8 +123,8 @@ body::after {
 
 .emotion-word {
   font-family:'Cormorant Garamond', serif;
-  font-style:italic; font-weight:400;
-  font-size:clamp(30px, 5.8vh, 58px);
+  font-style:italic; font-weight:600;
+  font-size:clamp(38px, 7vh, 72px);
   letter-spacing:0.04em;
   color:var(--ink);
   opacity:0;
@@ -170,7 +170,8 @@ body::after {
 
 .input-prompt {
   font-size:clamp(13px, 1.8vh, 17px); letter-spacing:0.26em;
-  text-transform:uppercase; color:var(--ink-faint);
+  text-transform:uppercase; color:var(--ink-mid);
+  opacity:1;
 }
 
 .emotion-input {
@@ -216,22 +217,25 @@ body::after {
 }
 
 .breath-ring {
-  width:clamp(70px, 13vh, 115px);
-  height:clamp(70px, 13vh, 115px);
+  width:clamp(90px, 16vh, 140px);
+  height:clamp(90px, 16vh, 140px);
   border-radius:50%;
-  border:2.5px solid var(--accent);
+  border:3px solid var(--accent);
   background: radial-gradient(circle, rgba(160,120,80,0.08) 0%, transparent 70%);
   opacity:0.4; transform:scale(0.35);
-  transition:transform 6.0s cubic-bezier(0.45,0.05,0.55,0.95),
-             opacity   6.0s cubic-bezier(0.45,0.05,0.55,0.95),
-             background 4.0s ease;
+  transition:transform 4.0s cubic-bezier(0.4,0.0,0.2,1),
+             opacity   4.0s cubic-bezier(0.4,0.0,0.2,1),
+             background 3.0s ease;
 }
 .breath-ring.inhale {
   transform:scale(1); opacity:1;
-  background: radial-gradient(circle, rgba(160,120,80,0.18) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(160,120,80,0.22) 0%, transparent 70%);
 }
 .breath-ring.exhale {
   transform:scale(0.35); opacity:0.35;
+  transition:transform 6.0s cubic-bezier(0.4,0.0,0.2,1),
+             opacity   6.0s cubic-bezier(0.4,0.0,0.2,1),
+             background 4.0s ease;
   background: radial-gradient(circle, rgba(160,120,80,0.04) 0%, transparent 70%);
 }
 
@@ -297,9 +301,9 @@ body::after {
 .s-tense .rabbit-glow   { opacity:0 !important; }
 
 /* Breathing */
-.s-breathing .rabbit-svg    { animation:rabbit-breathe 6.0s ease-in-out infinite; }
-.s-breathing .rabbit-glow   { opacity:1; animation:glow-breathe 6.0s ease-in-out infinite; }
-.s-breathing .rabbit-ground { animation:ground-breathe 6.0s ease-in-out infinite; }
+.s-breathing .rabbit-svg    { animation:rabbit-breathe 11.0s ease-in-out infinite; }
+.s-breathing .rabbit-glow   { opacity:1; animation:glow-breathe 11.0s ease-in-out infinite; }
+.s-breathing .rabbit-ground { animation:ground-breathe 11.0s ease-in-out infinite; }
 
 /* Still */
 .s-still .rabbit-svg    { transform:none; animation:none; filter:drop-shadow(0 8px 22px var(--shadow-rabbit)); }
@@ -310,17 +314,19 @@ body::after {
 
 /* ── Facial expression elements — hidden by default ── */
 /* Tears */
-#tear-L, #tear-R        { opacity:0; transition:opacity 0.8s ease; }
+#tear-L, #tear-R        { opacity:0; transition:opacity 0.5s ease; }
 /* Brow furrow (angry) */
-#brow-L, #brow-R        { opacity:0; transition:opacity 0.7s ease; }
+#brow-L, #brow-R        { opacity:0; transition:opacity 0.4s ease; }
 /* Anxious sweat drop */
-#sweat                  { opacity:0; transition:opacity 0.7s ease; }
+#sweat                  { opacity:0; transition:opacity 0.4s ease; }
+/* Anxious teeth */
+#teeth                  { opacity:0; transition:opacity 0.3s ease; }
 /* Overwhelmed heavy-lid overlays */
-#lid-L, #lid-R          { opacity:0; transition:opacity 0.7s ease; }
+#lid-L, #lid-R          { opacity:0; transition:opacity 0.5s ease; }
 /* Calm soft-mouth smile */
-#mouth-calm             { opacity:0; transition:opacity 0.8s ease; }
+#mouth-calm             { opacity:0; transition:opacity 0.5s ease; }
 /* Neutral mouth */
-#mouth-neutral          { opacity:0.5; transition:opacity 0.6s ease; }
+#mouth-neutral          { opacity:0.5; transition:opacity 0.5s ease; }
 
 /* Tear drop animation */
 @keyframes tear-fall {
@@ -352,26 +358,26 @@ body::after {
 
 /* ── Keyframes ── */
 @keyframes rabbit-breathe {
-  0%   { transform:scaleY(1.000) translateY(0px);  }
-  18%  { transform:scaleY(1.000) translateY(0px);  }
-  44%  { transform:scaleY(1.040) translateY(-5px); }
-  56%  { transform:scaleY(1.040) translateY(-5px); }
-  82%  { transform:scaleY(0.993) translateY(2px);  }
-  100% { transform:scaleY(1.000) translateY(0px);  }
+  0%        { transform:scaleY(1.000) scaleX(1.000) translateY(0px);   }
+  10%       { transform:scaleY(1.000) scaleX(1.000) translateY(0px);   }
+  36%       { transform:scaleY(1.075) scaleX(1.030) translateY(-9px);  } /* chest rises on inhale */
+  45%       { transform:scaleY(1.075) scaleX(1.030) translateY(-9px);  } /* hold */
+  90%       { transform:scaleY(0.988) scaleX(0.995) translateY(3px);   } /* settle on exhale */
+  100%      { transform:scaleY(1.000) scaleX(1.000) translateY(0px);   }
 }
 
 @keyframes glow-breathe {
-  0%,18%  { opacity:0.5; transform:translateX(-50%) scale(1);    }
-  44%,56% { opacity:1;   transform:translateX(-50%) scale(1.14); }
-  82%     { opacity:0.6; transform:translateX(-50%) scale(0.96); }
-  100%    { opacity:0.5; transform:translateX(-50%) scale(1);    }
+  0%,10%    { opacity:0.4; transform:translateX(-50%) scale(1);    }
+  36%,45%   { opacity:1;   transform:translateX(-50%) scale(1.22); }
+  90%       { opacity:0.4; transform:translateX(-50%) scale(0.92); }
+  100%      { opacity:0.4; transform:translateX(-50%) scale(1);    }
 }
 
 @keyframes ground-breathe {
-  0%,18%  { transform:translateX(-50%) scaleX(1);    opacity:1;    }
-  44%,56% { transform:translateX(-50%) scaleX(0.88); opacity:0.65; }
-  82%     { transform:translateX(-50%) scaleX(1.04); opacity:1;    }
-  100%    { transform:translateX(-50%) scaleX(1);    opacity:1;    }
+  0%,10%    { transform:translateX(-50%) scaleX(1);    opacity:0.9;  }
+  36%,45%   { transform:translateX(-50%) scaleX(0.82); opacity:0.5;  }
+  90%       { transform:translateX(-50%) scaleX(1.08); opacity:1;    }
+  100%      { transform:translateX(-50%) scaleX(1);    opacity:0.9;  }
 }
 </style>
 </head>
@@ -412,26 +418,24 @@ body::after {
         <ellipse cx="58" cy="108" rx="10" ry="7"  fill="#ddd7cf" opacity="0.28"/>
         <ellipse cx="92" cy="108" rx="10" ry="7"  fill="#ddd7cf" opacity="0.28"/>
 
-        <!-- ── Angry brow lines — hidden by default ── -->
-        <!-- Left brow: angled inward -->
+        <!-- ── Angry brow lines ── -->
         <line id="brow-L"
-              x1="52" y1="88" x2="63" y2="91"
-              stroke="#7a6a62" stroke-width="1.6"
+              x1="49" y1="86" x2="65" y2="92"
+              stroke="#4a3a32" stroke-width="2.8"
               stroke-linecap="round" opacity="0"/>
-        <!-- Right brow: angled inward (mirror) -->
         <line id="brow-R"
-              x1="98" y1="88" x2="87" y2="91"
-              stroke="#7a6a62" stroke-width="1.6"
+              x1="101" y1="86" x2="85" y2="92"
+              stroke="#4a3a32" stroke-width="2.8"
               stroke-linecap="round" opacity="0"/>
 
         <!-- ── Left eye ── -->
         <ellipse id="eye-iris-L"  cx="62" cy="97" rx="4.8" ry="5.2" fill="#241e1a"/>
         <ellipse id="eye-sheen-L" cx="62" cy="95" rx="5.0" ry="2.2" fill="#f0ece6" opacity="0.08"/>
         <ellipse id="eye-catch-L" cx="63.6" cy="95" rx="1.4" ry="1.4" fill="white" opacity="0.72"/>
-        <!-- Heavy lid overlay (overwhelmed) — covers top portion of eye -->
+        <!-- Heavy lid overlay (overwhelmed) -->
         <ellipse id="lid-L"
-                 cx="62" cy="94" rx="5.2" ry="3.4"
-                 fill="#d8d2ca" opacity="0"/>
+                 cx="62" cy="93" rx="5.8" ry="4.4"
+                 fill="#c8c2ba" opacity="0"/>
 
         <!-- ── Right eye ── -->
         <ellipse id="eye-iris-R"  cx="88" cy="97" rx="4.8" ry="5.2" fill="#241e1a"/>
@@ -439,8 +443,8 @@ body::after {
         <ellipse id="eye-catch-R" cx="89.6" cy="95" rx="1.4" ry="1.4" fill="white" opacity="0.72"/>
         <!-- Heavy lid overlay (overwhelmed) -->
         <ellipse id="lid-R"
-                 cx="88" cy="94" rx="5.2" ry="3.4"
-                 fill="#d8d2ca" opacity="0"/>
+                 cx="88" cy="93" rx="5.8" ry="4.4"
+                 fill="#c8c2ba" opacity="0"/>
 
         <!-- ── Nose ── -->
         <ellipse cx="75" cy="110" rx="3.2" ry="2.0" fill="#b09090" opacity="0.55"/>
@@ -475,20 +479,18 @@ body::after {
           </g>
         </g>
 
-        <!-- ── Anxious sweat drop (top right of head) ── -->
+        <!-- ── Anxious sweat drop ── -->
         <g id="sweat" opacity="0">
-          <ellipse cx="101" cy="80" rx="3" ry="4.5" fill="#a8c8d8" opacity="0.55"/>
-          <ellipse cx="101" cy="77" rx="2" ry="2"   fill="#a8c8d8" opacity="0.45"/>
+          <ellipse cx="104" cy="78" rx="4.2" ry="6.2" fill="#7ab0cc" opacity="0.80"/>
+          <ellipse cx="104" cy="73" rx="2.8" ry="2.8" fill="#7ab0cc" opacity="0.70"/>
         </g>
 
         <!-- ── Sad tears ── -->
-        <!-- Left tear -->
         <g id="tear-L" opacity="0">
-          <ellipse class="tear-drop" cx="57" cy="103" rx="1.8" ry="2.8" fill="#9ab8cc" opacity="0.65"/>
+          <ellipse class="tear-drop" cx="56" cy="104" rx="2.6" ry="4.0" fill="#6898b8" opacity="0.85"/>
         </g>
-        <!-- Right tear -->
         <g id="tear-R" opacity="0">
-          <ellipse class="tear-drop" cx="93" cy="103" rx="1.8" ry="2.8" fill="#9ab8cc" opacity="0.65"/>
+          <ellipse class="tear-drop" cx="94" cy="104" rx="2.6" ry="4.0" fill="#6898b8" opacity="0.85"/>
         </g>
 
         <!-- ── Paws ── -->
@@ -594,7 +596,7 @@ const THEME_BG = {
   sad:        '#c8d6dd',  /* slate — muted, withdrawn */
   angry:      '#ddc9bc',  /* warm clay — heat, friction */
   calm:       '#ccdacc',  /* sage — open, settled */
-  neutral:    '#e8e0d5',  /* warm sand — default */
+  neutral:    '#ede0cc',  /* warm parchment — default */
 };
 
 function setBackground(theme) {
@@ -657,11 +659,11 @@ function getQuote(theme) {
 
 /* ── Posture per theme ── */
 const POSTURE = {
-  anxious:    { earRotL:-15, earRotR: 15, eyeRy:5.6, eyeOffY: 0    },
-  overwhelmed:{ earRotL: -6, earRotR:  6, eyeRy:3.6, eyeOffY: 0.7  },
-  sad:        { earRotL:  5, earRotR: -5, eyeRy:3.0, eyeOffY: 1.0  },
-  angry:      { earRotL:-20, earRotR: 20, eyeRy:3.4, eyeOffY: 0.4  },
-  calm:       { earRotL:  6, earRotR: -6, eyeRy:5.2, eyeOffY: 0    },
+  anxious:    { earRotL:-22, earRotR: 22, eyeRy:6.2, eyeOffY:-0.5  },
+  overwhelmed:{ earRotL:-10, earRotR: 10, eyeRy:3.0, eyeOffY: 1.2  },
+  sad:        { earRotL: 10, earRotR:-10, eyeRy:2.6, eyeOffY: 1.6  },
+  angry:      { earRotL:-28, earRotR: 28, eyeRy:3.0, eyeOffY: 0.6  },
+  calm:       { earRotL:  8, earRotR: -8, eyeRy:5.4, eyeOffY:-0.2  },
 };
 const NEUTRAL = { earRotL:0, earRotR:0, eyeRy:5.2, eyeOffY:0 };
 
@@ -709,8 +711,8 @@ function showExpression(theme) {
       teethLower.classList.add('chattering');
       break;
     case 'overwhelmed':
-      lidL.style.opacity = '0.72';
-      lidR.style.opacity = '0.72';
+      lidL.style.opacity = '0.88';
+      lidR.style.opacity = '0.88';
       break;
     case 'calm':
       mouthCalm.style.opacity    = '0.55';
@@ -799,10 +801,12 @@ async function runRitual(raw) {
   addState('s-show-breath');
 
   /* Breath cycle 1 */
-  setBreathPhase('inhale'); await wait(6000);
+  setBreathPhase('inhale'); await wait(4000);
+  await wait(1000); /* hold at top */
   setBreathPhase('exhale'); await wait(6000);
   /* Breath cycle 2 */
-  setBreathPhase('inhale'); await wait(6000);
+  setBreathPhase('inhale'); await wait(4000);
+  await wait(1000); /* hold at top */
   setBreathPhase('exhale'); await wait(6000);
 
   /* 6. Still */
